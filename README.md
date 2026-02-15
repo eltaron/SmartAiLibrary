@@ -18,9 +18,6 @@
 - [🔐 Admin Access](#-admin-access)
 - [📡 API Documentation](#-api-documentation)
 - [🧪 Troubleshooting](#-troubleshooting)
-- [🗺 Roadmap](#-roadmap)
-- [🤝 Contributing](#-contributing)
-- [📜 License](#-license)
 
 ---
 

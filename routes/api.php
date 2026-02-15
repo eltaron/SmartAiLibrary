@@ -15,11 +15,17 @@ use App\Http\Controllers\Api\OnboardingController;
 // Authentication Routes (Public)
 Route::post('/register', [AuthController::class, 'register']); // إنشاء حساب
 Route::post('/login', [AuthController::class, 'login']);       // تسجيل دخول
-Route::post('/forgot-password', [NewPasswordController::class, 'forgotPassword']); // نسيت كلمة السر
-
+// Password Reset OTP Flow
+Route::post('/forgot-password/send-otp', [NewPasswordController::class, 'sendOtp']);
+Route::post('/forgot-password/verify-otp', [NewPasswordController::class, 'verifyOtp']);
+Route::post('/forgot-password/reset', [NewPasswordController::class, 'resetPassword']);
 // Social Auth
 Route::get('/auth/{provider}/redirect', [AuthController::class, 'socialRedirect']);
 Route::get('/auth/{provider}/callback', [AuthController::class, 'socialCallback']);
+
+Route::get('/reset-password/{token}', function (string $token) {
+    return response()->json(['token' => $token]);
+})->name('password.reset');
 
 // Protected Routes (يجب أن يكون مسجلاً)
 Route::middleware('auth:sanctum')->group(function () {
