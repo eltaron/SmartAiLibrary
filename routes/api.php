@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\HomeController;
 use App\Http\Controllers\Api\NewPasswordController;
 use App\Http\Controllers\Api\OnboardingController;
 
@@ -25,6 +26,7 @@ Route::get('/auth/{provider}/callback', [AuthController::class, 'socialCallback'
 
 
 Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/home', [HomeController::class, 'index']);
 
     // Auth Management
     Route::post('/logout', [AuthController::class, 'logout']);

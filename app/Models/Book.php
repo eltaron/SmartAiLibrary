@@ -45,4 +45,8 @@ class Book extends Model
     {
         return $this->hasOne(AiMetadata::class);
     }
+    public function library()
+    {
+        return $this->hasMany(PersonalShelf::class);
+    }
 }
