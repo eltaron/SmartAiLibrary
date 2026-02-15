@@ -23,11 +23,7 @@ Route::post('/forgot-password/reset', [NewPasswordController::class, 'resetPassw
 Route::get('/auth/{provider}/redirect', [AuthController::class, 'socialRedirect']);
 Route::get('/auth/{provider}/callback', [AuthController::class, 'socialCallback']);
 
-Route::get('/reset-password/{token}', function (string $token) {
-    return response()->json(['token' => $token]);
-})->name('password.reset');
 
-// Protected Routes (يجب أن يكون مسجلاً)
 Route::middleware('auth:sanctum')->group(function () {
 
     // Auth Management
@@ -37,8 +33,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // Onboarding Process (Screenshots)
-    Route::post('/profile/update', [OnboardingController::class, 'updateProfile']); // لحفظ الميلاد والنوع
-    Route::get('/topics', [OnboardingController::class, 'getTopics']);            // لعرض شاشة التصنيفات
-    Route::post('/topics/save', [OnboardingController::class, 'saveTopics']);     // لحفظ اختيارات التصنيفات
-
+    Route::post('/profile/update', [OnboardingController::class, 'updateProfile']);
+    Route::get('/topics', [OnboardingController::class, 'getTopics']);
+    Route::post('/topics/save', [OnboardingController::class, 'saveTopics']);
 });
