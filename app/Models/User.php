@@ -36,4 +36,15 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Category::class);
     }
+    // المؤلفين المفضلين
+    public function favoriteAuthors()
+    {
+        return $this->belongsToMany(Author::class, 'author_user');
+    }
+
+    // الكتب المفضلة (من خلال جدول الرف الشخصي)
+    public function favoriteBooks()
+    {
+        return $this->hasMany(PersonalShelf::class)->where('is_favorite', true);
+    }
 }
