@@ -3,21 +3,22 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\UserResource\Pages;
-use App\Filament\Resources\UserResource\RelationManagers;
 use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class UserResource extends Resource
 {
     protected static ?string $model = User::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-user-circle';
+
+    protected static ?string $navigationGroup = 'Administration';
+
+    protected static ?int $navigationSort = 1;
 
     public static function form(Form $form): Form
     {
@@ -33,18 +34,34 @@ class UserResource extends Resource
                     ->email()
                     ->required()
                     ->maxLength(255),
-                Forms\Components\TextInput::make('role')
+                Forms\Components\Select::make('role')
+                    ->options([
+                        'admin' => 'Admin',
+                        'researcher' => 'Researcher',
+                        'student' => 'Student',
+                    ])
                     ->required()
-                    ->maxLength(255)
                     ->default('student'),
-                Forms\Components\DateTimePicker::make('email_verified_at'),
+                Forms\Components\DateTimePicker::make('email_verified_at')
+                    ->label('Email Verified At'),
                 Forms\Components\TextInput::make('password')
                     ->password()
-                    ->required()
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('avatar_url')
+                    ->required(fn ($context) => $context === 'create')
                     ->maxLength(255)
-                    ->default(null),
+                    ->dehydrated(fn ($state) => filled($state)),
+                Forms\Components\TextInput::make('avatar_url')
+                    ->label('Avatar URL')
+                    ->maxLength(255)
+                    ->default(null)
+                    ->columnSpanFull()
+                    ->helperText('Enter a URL or upload path for the avatar'),
+                Forms\Components\DatePicker::make('birth_date'),
+                Forms\Components\Select::make('gender')
+                    ->options([
+                        'male' => 'Male',
+                        'female' => 'Female',
+                        'other' => 'Other',
+                    ]),
             ]);
     }
 
@@ -53,32 +70,44 @@ class UserResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
-                    ->searchable(),
+                    ->searchable()
+                    ->formatStateUsing(fn ($state) => str($state)->substr(0, 2)->upper() . ' ' . $state)
+                    ->label('User'),
                 Tables\Columns\TextColumn::make('username')
-                    ->searchable(),
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('email')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('role')
+                    ->badge()
+                    ->color(fn ($state) => match ($state) {
+                        'admin' => 'danger',
+                        'researcher' => 'warning',
+                        'student' => 'success',
+                        default => 'gray',
+                    })
                     ->searchable(),
-                Tables\Columns\TextColumn::make('email_verified_at')
-                    ->dateTime()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('avatar_url')
-                    ->searchable(),
+                Tables\Columns\IconColumn::make('email_verified_at')
+                    ->label('Verified')
+                    ->boolean()
+                    ->state(fn ($record) => !is_null($record->email_verified_at)),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->defaultSort('created_at', 'desc')
             ->filters([
-                //
+                Tables\Filters\SelectFilter::make('role')
+                    ->options([
+                        'admin' => 'Admin',
+                        'researcher' => 'Researcher',
+                        'student' => 'Student',
+                    ]),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -89,9 +118,7 @@ class UserResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public static function getPages(): array

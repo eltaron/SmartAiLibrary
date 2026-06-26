@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AuthorController;
 use App\Http\Controllers\Api\AuthorProfileController;
 use App\Http\Controllers\Api\BookActionController;
+use App\Http\Controllers\Api\CourseController;
 use App\Http\Controllers\Api\DiscoveryController;
 use App\Http\Controllers\Api\FavoriteController;
 use App\Http\Controllers\Api\HomeController;
@@ -74,4 +75,20 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/books/{id}/share', [BookActionController::class, 'shareBook']);
 
     Route::get('/authors/{id}/profile', [AuthorProfileController::class, 'show']);
+
+    // Courses
+    Route::get('/courses', [CourseController::class, 'index']);
+    Route::get('/courses/featured', [CourseController::class, 'featured']);
+    Route::get('/courses/free', [CourseController::class, 'free']);
+    Route::get('/courses/category/{categoryId}', [CourseController::class, 'byCategory']);
+    Route::get('/courses/{id}', [CourseController::class, 'show']);
+    Route::post('/courses', [CourseController::class, 'store']);
+    Route::put('/courses/{id}', [CourseController::class, 'update']);
+    Route::delete('/courses/{id}', [CourseController::class, 'destroy']);
+
+    // Course Videos
+    Route::get('/courses/{courseId}/videos', [CourseController::class, 'videos']);
+    Route::post('/courses/{courseId}/videos', [CourseController::class, 'addVideo']);
+    Route::put('/courses/{courseId}/videos/{videoId}', [CourseController::class, 'updateVideo']);
+    Route::delete('/courses/{courseId}/videos/{videoId}', [CourseController::class, 'deleteVideo']);
 });

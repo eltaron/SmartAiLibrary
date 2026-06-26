@@ -3,32 +3,36 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\AiMetadataResource\Pages;
-use App\Filament\Resources\AiMetadataResource\RelationManagers;
 use App\Models\AiMetadata;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class AiMetadataResource extends Resource
 {
     protected static ?string $model = AiMetadata::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-sparkles';
+
+    protected static ?string $navigationGroup = 'AI Engine';
+
+    protected static ?int $navigationSort = 1;
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('book_id')
+                Forms\Components\Select::make('book_id')
+                    ->relationship('book', 'title')
                     ->required()
-                    ->numeric(),
+                    ->searchable()
+                    ->preload(),
                 Forms\Components\Textarea::make('summary')
                     ->columnSpanFull(),
                 Forms\Components\Textarea::make('detailed_summary')
+                    ->label('Detailed Summary')
                     ->columnSpanFull(),
                 Forms\Components\Textarea::make('keywords')
                     ->columnSpanFull(),
@@ -38,6 +42,7 @@ class AiMetadataResource extends Resource
                     ->maxLength(255)
                     ->default(null),
                 Forms\Components\Textarea::make('vector_embeddings')
+                    ->label('Vector Embeddings')
                     ->columnSpanFull(),
             ]);
     }
@@ -46,25 +51,31 @@ class AiMetadataResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('book_id')
-                    ->numeric()
+                Tables\Columns\TextColumn::make('book.title')
+                    ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('sentiment')
+                    ->badge()
+                    ->color(fn ($state) => match ($state) {
+                        'positive' => 'success',
+                        'neutral' => 'gray',
+                        'negative' => 'danger',
+                        default => 'gray',
+                    })
                     ->searchable(),
+                Tables\Columns\TextColumn::make('keywords')
+                    ->limit(30)
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
             ])
-            ->filters([
-                //
-            ])
+            ->defaultSort('created_at', 'desc')
+            ->filters([])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -75,9 +86,7 @@ class AiMetadataResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public static function getPages(): array

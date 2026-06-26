@@ -78,7 +78,10 @@ class DatabaseSeeder extends Seeder
             ]);
         });
 
-        // 7. إنشاء داتا مطابقة للصورة (عشان البرزنتيشن)
+        // 7. إنشاء كورسات وفيديوهات
+        $this->call(CourseSeeder::class);
+
+        // 8. إنشاء داتا مطابقة للصورة (عشان البرزنتيشن)
         $this->createDemoData();
     }
 

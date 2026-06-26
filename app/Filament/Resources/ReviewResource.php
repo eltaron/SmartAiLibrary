@@ -3,35 +3,42 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ReviewResource\Pages;
-use App\Filament\Resources\ReviewResource\RelationManagers;
 use App\Models\Review;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class ReviewResource extends Resource
 {
     protected static ?string $model = Review::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-star';
+
+    protected static ?string $navigationGroup = 'Community';
+
+    protected static ?int $navigationSort = 1;
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('user_id')
+                Forms\Components\Select::make('user_id')
+                    ->relationship('user', 'name')
                     ->required()
-                    ->numeric(),
-                Forms\Components\TextInput::make('book_id')
+                    ->searchable()
+                    ->preload(),
+                Forms\Components\Select::make('book_id')
+                    ->relationship('book', 'title')
                     ->required()
-                    ->numeric(),
+                    ->searchable()
+                    ->preload(),
                 Forms\Components\TextInput::make('rating')
                     ->required()
-                    ->numeric(),
+                    ->numeric()
+                    ->minValue(1)
+                    ->maxValue(5),
                 Forms\Components\Textarea::make('comment')
                     ->columnSpanFull(),
             ]);
@@ -41,29 +48,48 @@ class ReviewResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('user_id')
-                    ->numeric()
+                Tables\Columns\TextColumn::make('user.name')
+                    ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('book_id')
-                    ->numeric()
-                    ->sortable(),
+                Tables\Columns\TextColumn::make('book.title')
+                    ->searchable()
+                    ->sortable()
+                    ->limit(30),
                 Tables\Columns\TextColumn::make('rating')
                     ->numeric()
-                    ->sortable(),
+                    ->sortable()
+                    ->color(fn ($state) => match (true) {
+                        $state >= 4 => 'success',
+                        $state >= 3 => 'warning',
+                        default => 'danger',
+                    })
+                    ->badge(),
+                Tables\Columns\TextColumn::make('comment')
+                    ->limit(50)
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->defaultSort('created_at', 'desc')
             ->filters([
-                //
+                Tables\Filters\SelectFilter::make('book')
+                    ->relationship('book', 'title')
+                    ->searchable()
+                    ->preload(),
+                Tables\Filters\SelectFilter::make('rating')
+                    ->options([
+                        1 => '1 Star',
+                        2 => '2 Stars',
+                        3 => '3 Stars',
+                        4 => '4 Stars',
+                        5 => '5 Stars',
+                    ]),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -74,9 +100,7 @@ class ReviewResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public static function getPages(): array

@@ -1,0 +1,40 @@
+[project]
+name = "aigp"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "aiokafka",
+    "alembic",
+    "asyncpg",
+    "ebooklib",
+    "fastapi",
+    "langchain",
+    "langchain-openai",
+    "langdetect",
+    "orjson",
+    "pinecone",
+    "prometheus-fastapi-instrumentator",
+    "pydantic",
+    "pydantic-settings",
+    "pymupdf",
+    "python-multipart",
+    "redis[hiredis]",
+    "sentence-transformers",
+    "spacy",
+    "sqlalchemy",
+    "structlog",
+    "tiktoken",
+    "torch",
+    "transformers",
+    "uvicorn[standard]",
+]
+
+[project.optional-dependencies]
+test = [
+    "fakeredis==2.20.1",
+    "httpx==0.26.0",
+    "pytest==7.4.4",
+    "pytest-asyncio==0.23.3",
+]

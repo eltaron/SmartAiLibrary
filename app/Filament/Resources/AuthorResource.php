@@ -3,21 +3,22 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\AuthorResource\Pages;
-use App\Filament\Resources\AuthorResource\RelationManagers;
 use App\Models\Author;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class AuthorResource extends Resource
 {
     protected static ?string $model = Author::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-users';
+
+    protected static ?string $navigationGroup = 'Library';
+
+    protected static ?int $navigationSort = 3;
 
     public static function form(Form $form): Form
     {
@@ -29,9 +30,10 @@ class AuthorResource extends Resource
                 Forms\Components\Textarea::make('bio')
                     ->columnSpanFull(),
                 Forms\Components\FileUpload::make('image')
-                    ->image(),
+                    ->image()
+                    ->directory('authors'),
                 Forms\Components\Toggle::make('is_narrator')
-                    ->required(),
+                    ->label('Is Narrator'),
             ]);
     }
 
@@ -41,23 +43,32 @@ class AuthorResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->searchable(),
-                Tables\Columns\ImageColumn::make('image'),
+                Tables\Columns\ImageColumn::make('image')
+                    ->square()
+                    ->size(50),
                 Tables\Columns\IconColumn::make('is_narrator')
-                    ->boolean(),
+                    ->boolean()
+                    ->label('Narrator'),
+                Tables\Columns\TextColumn::make('books_count')
+                    ->counts('books')
+                    ->label('Books')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->defaultSort('created_at', 'desc')
             ->filters([
-                //
+                Tables\Filters\TernaryFilter::make('is_narrator')
+                    ->label('Role')
+                    ->trueLabel('Narrator')
+                    ->falseLabel('Author')
+                    ->placeholder('All'),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -68,9 +79,7 @@ class AuthorResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public static function getPages(): array

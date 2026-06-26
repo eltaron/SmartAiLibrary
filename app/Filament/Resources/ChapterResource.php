@@ -3,45 +3,51 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ChapterResource\Pages;
-use App\Filament\Resources\ChapterResource\RelationManagers;
 use App\Models\Chapter;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class ChapterResource extends Resource
 {
     protected static ?string $model = Chapter::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-list-bullet';
+
+    protected static ?string $navigationGroup = 'Library';
+
+    protected static ?int $navigationSort = 5;
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('book_id')
+                Forms\Components\Select::make('book_id')
+                    ->relationship('book', 'title')
                     ->required()
-                    ->numeric(),
+                    ->searchable()
+                    ->preload(),
                 Forms\Components\TextInput::make('title')
                     ->required()
                     ->maxLength(255),
-                Forms\Components\TextInput::make('audio_url')
-                    ->maxLength(255)
-                    ->default(null),
+                Forms\Components\FileUpload::make('audio_url')
+                    ->label('Audio File')
+                    ->directory('chapters/audio')
+                    ->acceptedFileTypes(['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/mp4']),
                 Forms\Components\TextInput::make('duration_seconds')
                     ->required()
                     ->numeric()
-                    ->default(0),
+                    ->default(0)
+                    ->label('Duration (seconds)'),
                 Forms\Components\Textarea::make('content_text')
                     ->columnSpanFull(),
                 Forms\Components\TextInput::make('order_column')
                     ->required()
                     ->numeric()
-                    ->default(1),
+                    ->default(1)
+                    ->label('Order'),
             ]);
     }
 
@@ -49,33 +55,35 @@ class ChapterResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('book_id')
-                    ->numeric()
+                Tables\Columns\TextColumn::make('book.title')
+                    ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('title')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('audio_url')
-                    ->searchable(),
+                    ->searchable()
+                    ->limit(40),
                 Tables\Columns\TextColumn::make('duration_seconds')
-                    ->numeric()
+                    ->label('Duration')
+                    ->formatStateUsing(fn ($state) => gmdate('H:i:s', $state))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('order_column')
+                    ->label('Order')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->defaultSort('book_id', 'order_column')
             ->filters([
-                //
+                Tables\Filters\SelectFilter::make('book')
+                    ->relationship('book', 'title')
+                    ->searchable()
+                    ->preload(),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -86,9 +94,7 @@ class ChapterResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public static function getPages(): array

@@ -1,0 +1,32 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+rule_files:
+  - "alerts.yml"
+
+scrape_configs:
+  - job_name: "ingestion"
+    static_configs:
+      - targets: ["ingestion:8000"]
+
+  - job_name: "rec-service"
+    static_configs:
+      - targets: ["rec-service:8001"]
+
+  - job_name: "search-service"
+    static_configs:
+      - targets: ["search-service:8002"]
+
+  - job_name: "summarise-service"
+    static_configs:
+      - targets: ["summarise-service:8003"]
+
+  - job_name: "rag-service"
+    static_configs:
+      - targets: ["rag-service:8004"]

@@ -3,43 +3,58 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\PersonalShelfResource\Pages;
-use App\Filament\Resources\PersonalShelfResource\RelationManagers;
 use App\Models\PersonalShelf;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class PersonalShelfResource extends Resource
 {
     protected static ?string $model = PersonalShelf::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-bookmark';
+
+    protected static ?string $navigationGroup = 'Community';
+
+    protected static ?int $navigationSort = 2;
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('user_id')
+                Forms\Components\Select::make('user_id')
+                    ->relationship('user', 'name')
                     ->required()
-                    ->numeric(),
-                Forms\Components\TextInput::make('book_id')
+                    ->searchable()
+                    ->preload(),
+                Forms\Components\Select::make('book_id')
+                    ->relationship('book', 'title')
                     ->required()
-                    ->numeric(),
-                Forms\Components\TextInput::make('status')
+                    ->searchable()
+                    ->preload(),
+                Forms\Components\Select::make('status')
+                    ->options([
+                        'want_to_read' => 'Want to Read',
+                        'reading' => 'Reading',
+                        'completed' => 'Completed',
+                        'dropped' => 'Dropped',
+                    ])
                     ->required(),
                 Forms\Components\Toggle::make('is_favorite')
-                    ->required(),
+                    ->label('Favorite'),
+                Forms\Components\Toggle::make('is_blocked')
+                    ->label('Blocked'),
                 Forms\Components\TextInput::make('current_page')
                     ->required()
                     ->numeric()
-                    ->default(0),
+                    ->default(0)
+                    ->label('Current Page'),
                 Forms\Components\TextInput::make('current_chapter_id')
                     ->numeric()
-                    ->default(null),
+                    ->default(null)
+                    ->label('Current Chapter'),
             ]);
     }
 
@@ -47,35 +62,52 @@ class PersonalShelfResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('user_id')
-                    ->numeric()
+                Tables\Columns\TextColumn::make('user.name')
+                    ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('book_id')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('status'),
+                Tables\Columns\TextColumn::make('book.title')
+                    ->searchable()
+                    ->sortable()
+                    ->limit(30),
+                Tables\Columns\TextColumn::make('status')
+                    ->badge()
+                    ->color(fn ($state) => match ($state) {
+                        'reading' => 'info',
+                        'completed' => 'success',
+                        'want_to_read' => 'warning',
+                        'dropped' => 'danger',
+                        default => 'gray',
+                    }),
                 Tables\Columns\IconColumn::make('is_favorite')
-                    ->boolean(),
+                    ->boolean()
+                    ->label('Fav'),
+                Tables\Columns\IconColumn::make('is_blocked')
+                    ->boolean()
+                    ->label('Blocked'),
                 Tables\Columns\TextColumn::make('current_page')
                     ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('current_chapter_id')
-                    ->numeric()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->defaultSort('created_at', 'desc')
             ->filters([
-                //
+                Tables\Filters\SelectFilter::make('status')
+                    ->options([
+                        'want_to_read' => 'Want to Read',
+                        'reading' => 'Reading',
+                        'completed' => 'Completed',
+                        'dropped' => 'Dropped',
+                    ]),
+                Tables\Filters\TernaryFilter::make('is_favorite'),
+                Tables\Filters\TernaryFilter::make('is_blocked'),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -86,9 +118,7 @@ class PersonalShelfResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public static function getPages(): array

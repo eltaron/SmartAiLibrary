@@ -23,6 +23,11 @@ class User extends Authenticatable
         'password' => 'hashed',
     ];
 
+    public function getFilamentAvatarUrl(): ?string
+    {
+        return null;
+    }
+
     public function library()
     {
         return $this->hasMany(PersonalShelf::class);
