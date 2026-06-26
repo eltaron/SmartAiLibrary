@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\HomeController;
 use App\Http\Controllers\Api\NewPasswordController;
 use App\Http\Controllers\Api\OnboardingController;
 use App\Http\Controllers\Api\SearchController;
+use App\Http\Controllers\Api\AiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -91,4 +92,30 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/courses/{courseId}/videos', [CourseController::class, 'addVideo']);
     Route::put('/courses/{courseId}/videos/{videoId}', [CourseController::class, 'updateVideo']);
     Route::delete('/courses/{courseId}/videos/{videoId}', [CourseController::class, 'deleteVideo']);
+
+    // ─── AI Services ────────────────────────────────────────────
+    Route::prefix('ai')->group(function () {
+        // Health
+        Route::get('/health', [AiController::class, 'health']);
+
+        // Ingestion (رفع الكتب)
+        Route::post('/ingest', [AiController::class, 'ingest']);
+        Route::get('/ingest/{isbn}/status', [AiController::class, 'ingestStatus']);
+
+        // Recommendations (التوصيات)
+        Route::post('/recommendations', [AiController::class, 'recommendations']);
+        Route::get('/recommendations/cold-start', [AiController::class, 'coldStart']);
+
+        // Search (البحث الدلالي)
+        Route::post('/search/semantic', [AiController::class, 'search']);
+        Route::post('/search/similar/{isbn}', [AiController::class, 'similarBooks']);
+
+        // Summarise (التلخيص)
+        Route::post('/summarise', [AiController::class, 'summarise']);
+        Route::get('/summarise/{isbn}/progress', [AiController::class, 'summariseProgress']);
+
+        // RAG Q&A (الأسئلة التفاعلية)
+        Route::post('/qa/sync', [AiController::class, 'qaSync']);
+        Route::post('/qa/stream', [AiController::class, 'qaStream']);
+    });
 });
